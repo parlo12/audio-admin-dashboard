@@ -2,6 +2,8 @@
 
 A modern, responsive admin dashboard for managing the Audio Platform. Built with TypeScript, HTML, and CSS.
 
+🚀 **Deployed with CI/CD to DigitalOcean**
+
 ## Features
 
 ### 🔐 Authentication
