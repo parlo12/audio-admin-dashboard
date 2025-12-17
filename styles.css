@@ -532,6 +532,17 @@ body {
         margin: 20px;
     }
 }
+
+/* Tab Header */
+.tab-header {
+    margin-bottom: 24px;
+}
+
+.tab-header h2 {
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+
 /* Maintenance Tab Styles */
 .maintenance-section {
     background: var(--card-background);
