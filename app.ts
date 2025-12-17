@@ -754,6 +754,146 @@ function setupMaintenanceListeners(): void {
             hideLoading();
         }
     });
+    
+    // File Browser
+    loadFileTree();
+    document.getElementById('refreshFilesBtn')?.addEventListener('click', () => {
+        loadFileTree();
+    });
+}
+
+interface FileTreeNode {
+    name: string;
+    path: string;
+    isDir: boolean;
+    size?: number;
+    children?: FileTreeNode[];
+}
+
+async function loadFileTree(): Promise<void> {
+    const container = document.getElementById('fileTreeContainer');
+    if (!container) return;
+    
+    container.innerHTML = '<div class="loading">Loading file tree...</div>';
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/admin/files/tree`, {
+            headers: {
+                'Authorization': `Bearer ${appState.getToken()}`
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Failed to load file tree: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        renderFileTree(container, data.tree, data.root);
+    } catch (error) {
+        container.innerHTML = `<div class="file-tree-empty">❌ Error loading files: ${(error as Error).message}</div>`;
+    }
+}
+
+function renderFileTree(container: HTMLElement, node: FileTreeNode, rootPath: string): void {
+    if (!node) {
+        container.innerHTML = '<div class="file-tree-empty">No files found</div>';
+        return;
+    }
+    
+    container.innerHTML = '';
+    
+    // Show root path
+    const rootHeader = document.createElement('div');
+    rootHeader.className = 'file-tree-node-header';
+    rootHeader.innerHTML = `<span class="file-tree-icon">📁</span><strong>${rootPath}</strong>`;
+    container.appendChild(rootHeader);
+    
+    // Render children if any
+    if (node.children && node.children.length > 0) {
+        const childrenContainer = document.createElement('div');
+        childrenContainer.className = 'file-tree-children';
+        
+        node.children.forEach(child => {
+            renderNode(childrenContainer, child, 0);
+        });
+        
+        container.appendChild(childrenContainer);
+    } else {
+        const empty = document.createElement('div');
+        empty.className = 'file-tree-empty';
+        empty.textContent = 'No files in directory';
+        container.appendChild(empty);
+    }
+}
+
+function renderNode(parent: HTMLElement, node: FileTreeNode, depth: number): void {
+    const nodeDiv = document.createElement('div');
+    nodeDiv.className = 'file-tree-node';
+    
+    const header = document.createElement('div');
+    header.className = 'file-tree-node-header';
+    
+    // Toggle arrow for directories
+    const toggle = document.createElement('span');
+    toggle.className = 'file-tree-toggle';
+    if (node.isDir && node.children && node.children.length > 0) {
+        toggle.textContent = '▼';
+    } else if (node.isDir) {
+        toggle.textContent = '▶';
+    } else {
+        toggle.textContent = '';
+    }
+    
+    // Icon
+    const icon = document.createElement('span');
+    icon.className = 'file-tree-icon';
+    icon.textContent = node.isDir ? '📁' : '📄';
+    
+    // Name
+    const name = document.createElement('span');
+    name.className = 'file-tree-name';
+    name.textContent = node.name;
+    
+    // Size (for files only)
+    const size = document.createElement('span');
+    size.className = 'file-tree-size';
+    if (!node.isDir && node.size !== undefined) {
+        size.textContent = formatFileSize(node.size);
+    }
+    
+    header.appendChild(toggle);
+    header.appendChild(icon);
+    header.appendChild(name);
+    header.appendChild(size);
+    nodeDiv.appendChild(header);
+    
+    // Children container
+    if (node.isDir && node.children && node.children.length > 0) {
+        const childrenDiv = document.createElement('div');
+        childrenDiv.className = 'file-tree-children';
+        
+        node.children.forEach(child => {
+            renderNode(childrenDiv, child, depth + 1);
+        });
+        
+        nodeDiv.appendChild(childrenDiv);
+        
+        // Toggle functionality
+        header.addEventListener('click', () => {
+            childrenDiv.classList.toggle('collapsed');
+            toggle.textContent = childrenDiv.classList.contains('collapsed') ? '▶' : '▼';
+        });
+    }
+    
+    parent.appendChild(nodeDiv);
+}
+
+function formatFileSize(bytes: number): string {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return `${(bytes / Math.pow(k, i)).toFixed(2)} ${sizes[i]}`;
 }
 
 function showResult(elementId: string, message: string, type: 'success' | 'error'): void {
