@@ -544,6 +544,11 @@ body {
 }
 
 /* Maintenance Tab Styles */
+#maintenanceTab {
+    min-height: 500px;
+    padding: 20px;
+}
+
 .maintenance-section {
     background: var(--card-background);
     border-radius: 12px;
