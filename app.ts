@@ -50,7 +50,7 @@ interface ActiveUsersResponse {
 }
 
 // API Configuration
-const API_BASE_URL = 'http://68.183.22.205:8080';
+const API_BASE_URL = 'http://68.183.22.205:8082';
 
 // State Management
 class AppState {
