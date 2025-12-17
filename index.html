@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Audio Platform</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="loginScreen" class="screen">
+        <div class="login-container">
+            <h1>Admin Login</h1>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" required autocomplete="username">
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" required autocomplete="current-password">
+                </div>
+                <button type="submit" class="btn btn-primary">Login</button>
+                <div id="loginError" class="error-message"></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main Dashboard -->
+    <div id="dashboardScreen" class="screen" style="display: none;">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1>Admin Dashboard</h1>
+                <div class="header-actions">
+                    <span id="adminUsername" class="admin-name"></span>
+                    <button id="logoutBtn" class="btn btn-secondary">Logout</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="nav-tabs">
+            <button class="nav-tab active" data-tab="overview">Overview</button>
+            <button class="nav-tab" data-tab="users">Users</button>
+            <button class="nav-tab" data-tab="active">Active Users</button>
+        </nav>
+
+        <!-- Tab Content Container -->
+        <main class="main-content">
+            <!-- Overview Tab -->
+            <div id="overviewTab" class="tab-content active">
+                <section class="stats-section">
+                    <h2>Platform Statistics</h2>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon">👥</div>
+                            <div class="stat-info">
+                                <h3>Total Users</h3>
+                                <p class="stat-value" id="totalUsers">-</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">💎</div>
+                            <div class="stat-info">
+                                <h3>Paid Users</h3>
+                                <p class="stat-value" id="paidUsers">-</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">🆓</div>
+                            <div class="stat-info">
+                                <h3>Free Users</h3>
+                                <p class="stat-value" id="freeUsers">-</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">📊</div>
+                            <div class="stat-info">
+                                <h3>Active Users (7d)</h3>
+                                <p class="stat-value" id="activeUsers7d">-</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">🆕</div>
+                            <div class="stat-info">
+                                <h3>New Today</h3>
+                                <p class="stat-value" id="newUsersToday">-</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">📈</div>
+                            <div class="stat-info">
+                                <h3>New This Week</h3>
+                                <p class="stat-value" id="newUsersWeek">-</p>
+                            </div>
+                        </div>
+                    </div>
+                    <button id="refreshStatsBtn" class="btn btn-secondary">Refresh Stats</button>
+                </section>
+            </div>
+
+            <!-- Users Tab -->
+            <div id="usersTab" class="tab-content">
+                <section class="users-section">
+                    <div class="section-header">
+                        <h2>User Management</h2>
+                    </div>
+                    
+                    <!-- Filters -->
+                    <div class="filters">
+                        <div class="filter-group">
+                            <input type="text" id="userSearch" placeholder="Search by username or email...">
+                        </div>
+                        <div class="filter-group">
+                            <select id="accountTypeFilter">
+                                <option value="">All Account Types</option>
+                                <option value="free">Free</option>
+                                <option value="paid">Paid</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <select id="adminFilter">
+                                <option value="">All Users</option>
+                                <option value="true">Admins Only</option>
+                            </select>
+                        </div>
+                        <button id="applyFiltersBtn" class="btn btn-primary">Apply Filters</button>
+                        <button id="clearFiltersBtn" class="btn btn-secondary">Clear</button>
+                    </div>
+
+                    <!-- Users Table -->
+                    <div class="table-container">
+                        <table class="users-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Username</th>
+                                    <th>Email</th>
+                                    <th>Account Type</th>
+                                    <th>Admin</th>
+                                    <th>Books Read</th>
+                                    <th>Last Active</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTableBody">
+                                <tr>
+                                    <td colspan="9" class="loading">Loading users...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    <div class="pagination">
+                        <button id="prevPageBtn" class="btn btn-secondary" disabled>Previous</button>
+                        <span id="pageInfo" class="page-info">Page 1 of 1</span>
+                        <button id="nextPageBtn" class="btn btn-secondary" disabled>Next</button>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Active Users Tab -->
+            <div id="activeTab" class="tab-content">
+                <section class="active-users-section">
+                    <div class="section-header">
+                        <h2>Active Users</h2>
+                        <div class="filter-group">
+                            <label for="daysFilter">Time Period:</label>
+                            <select id="daysFilter">
+                                <option value="1">Last 24 Hours</option>
+                                <option value="7" selected>Last 7 Days</option>
+                                <option value="30">Last 30 Days</option>
+                            </select>
+                            <button id="applyDaysFilterBtn" class="btn btn-primary">Apply</button>
+                        </div>
+                    </div>
+
+                    <!-- Active Users Stats -->
+                    <div class="active-stats">
+                        <div class="active-stat-card">
+                            <h3>Total Active</h3>
+                            <p class="stat-value" id="totalActive">-</p>
+                        </div>
+                        <div class="active-stat-card">
+                            <h3>Daily Active</h3>
+                            <p class="stat-value" id="dailyActive">-</p>
+                        </div>
+                        <div class="active-stat-card">
+                            <h3>Weekly Active</h3>
+                            <p class="stat-value" id="weeklyActive">-</p>
+                        </div>
+                    </div>
+
+                    <!-- Active Users Table -->
+                    <div class="table-container">
+                        <table class="users-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Username</th>
+                                    <th>Email</th>
+                                    <th>Account Type</th>
+                                    <th>Books Read</th>
+                                    <th>Last Active</th>
+                                    <th>Days Since Active</th>
+                                </tr>
+                            </thead>
+                            <tbody id="activeUsersTableBody">
+                                <tr>
+                                    <td colspan="7" class="loading">Loading active users...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- Admin Toggle Modal -->
+    <div id="adminModal" class="modal">
+        <div class="modal-content">
+            <h2>Manage Admin Access</h2>
+            <p id="adminModalMessage"></p>
+            <div class="modal-actions">
+                <button id="confirmAdminBtn" class="btn btn-primary">Confirm</button>
+                <button id="cancelAdminBtn" class="btn btn-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="spinner"></div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+node_modules/
+*.js
+*.js.map
+*.log
+.DS_Store
+.env
+dist/
+build/
