@@ -139,6 +139,7 @@ class ApiService {
         options: RequestInit = {}
     ): Promise<T> {
         const token = appState.getToken();
+        console.log('Making request to:', endpoint, 'Token:', token ? `${token.substring(0, 20)}...` : 'NO TOKEN');
         const headers: Record<string, string> = {
             'Content-Type': 'application/json',
             ...(options.headers as Record<string, string>),
@@ -481,10 +482,13 @@ function setupEventListeners(): void {
         try {
             showLoading();
             const response = await api.login(username, password);
+            console.log('Login response received:', response);
             appState.setToken(response.token);
+            console.log('Token set, value:', appState.getToken()?.substring(0, 20) + '...');
             appState.setUsername(username);
             
             // Verify admin access by loading stats
+            console.log('About to call getStats...');
             await api.getStats();
             
             showDashboardScreen();
