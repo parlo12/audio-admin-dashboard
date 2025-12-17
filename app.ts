@@ -210,6 +210,32 @@ class ApiService {
             body: JSON.stringify({ is_admin: isAdmin }),
         });
     }
+
+    // Maintenance API calls
+    async systemWipe(confirmationToken: string): Promise<any> {
+        return this.request('/admin/system/wipe', {
+            method: 'POST',
+            body: JSON.stringify({ confirmation_token: confirmationToken }),
+        });
+    }
+
+    async deleteUserFiles(userId: number): Promise<any> {
+        return this.request(`/admin/users/${userId}/files`, {
+            method: 'DELETE',
+        });
+    }
+
+    async deleteUserData(userId: number): Promise<any> {
+        return this.request(`/admin/users/${userId}/data`, {
+            method: 'DELETE',
+        });
+    }
+
+    async deleteUserComplete(userId: number): Promise<any> {
+        return this.request(`/admin/users/${userId}/complete`, {
+            method: 'DELETE',
+        });
+    }
 }
 
 const api = new ApiService();
@@ -294,6 +320,8 @@ function switchTab(tabName: string): void {
     } else if (tabName === 'active') {
         document.getElementById('activeTab')?.classList.add('active');
         loadActiveUsers();
+    } else if (tabName === 'maintenance') {
+        document.getElementById('maintenanceTab')?.classList.add('active');
     }
 }
 
@@ -563,6 +591,190 @@ function setupEventListeners(): void {
     // Admin Modal
     document.getElementById('confirmAdminBtn')?.addEventListener('click', confirmAdminToggle);
     document.getElementById('cancelAdminBtn')?.addEventListener('click', cancelAdminToggle);
+
+    // Maintenance Tab Event Listeners
+    setupMaintenanceListeners();
+}
+
+// Maintenance Tab Functions
+function setupMaintenanceListeners(): void {
+    // System Wipe confirmation input
+    const wipeInput = document.getElementById('wipeConfirmation') as HTMLInputElement;
+    const wipeBtn = document.getElementById('systemWipeBtn') as HTMLButtonElement;
+    
+    wipeInput?.addEventListener('input', () => {
+        const isValid = wipeInput.value === 'WIPE_ALL_USER_DATA_CONFIRM';
+        wipeBtn.disabled = !isValid;
+    });
+
+    // System Wipe button
+    wipeBtn?.addEventListener('click', async () => {
+        const confirmation = confirm(
+            '⚠️ FINAL WARNING ⚠️\n\n' +
+            'This will DELETE ALL non-admin users and their database records!\n\n' +
+            'This action CANNOT be undone!\n\n' +
+            'Are you absolutely sure you want to continue?'
+        );
+        
+        if (!confirmation) return;
+
+        try {
+            showLoading();
+            const result = await api.systemWipe('WIPE_ALL_USER_DATA_CONFIRM');
+            showResult('wipeResult', 
+                `✅ System wiped successfully!\n` +
+                `Users deleted: ${result.users_deleted}\n` +
+                `Admins preserved: ${result.admins_preserved}`,
+                'success'
+            );
+            wipeInput.value = '';
+            wipeBtn.disabled = true;
+            
+            // Refresh stats
+            if (getCurrentTab() === 'overview') {
+                loadStats();
+            }
+        } catch (error) {
+            showResult('wipeResult', `❌ Error: ${(error as Error).message}`, 'error');
+        } finally {
+            hideLoading();
+        }
+    });
+
+    // Delete User Files
+    document.getElementById('deleteUserFilesBtn')?.addEventListener('click', async () => {
+        const userId = parseInt((document.getElementById('deleteUserId') as HTMLInputElement).value);
+        if (!userId || userId < 1) {
+            showResult('deleteResult', '❌ Please enter a valid user ID', 'error');
+            return;
+        }
+
+        const confirmation = confirm(
+            `⚠️ Delete all files for user ID ${userId}?\n\n` +
+            'This will delete:\n' +
+            '- Upload files (PDF/TXT/EPUB/MOBI)\n' +
+            '- Generated audio files\n' +
+            '- Cover images\n' +
+            '- Audio chunks\n\n' +
+            'This action CANNOT be undone!'
+        );
+
+        if (!confirmation) return;
+
+        try {
+            showLoading();
+            const result = await api.deleteUserFiles(userId);
+            showResult('deleteResult',
+                `✅ Files deleted successfully!\n` +
+                `User ID: ${result.user_id}\n` +
+                `Books deleted: ${result.books_deleted}\n` +
+                `Chunks deleted: ${result.chunks_deleted}`,
+                'success'
+            );
+            (document.getElementById('deleteUserId') as HTMLInputElement).value = '';
+        } catch (error) {
+            showResult('deleteResult', `❌ Error: ${(error as Error).message}`, 'error');
+        } finally {
+            hideLoading();
+        }
+    });
+
+    // Delete User Data
+    document.getElementById('deleteUserDataBtn')?.addEventListener('click', async () => {
+        const userId = parseInt((document.getElementById('deleteUserId') as HTMLInputElement).value);
+        if (!userId || userId < 1) {
+            showResult('deleteResult', '❌ Please enter a valid user ID', 'error');
+            return;
+        }
+
+        const confirmation = confirm(
+            `⚠️ Delete database records for user ID ${userId}?\n\n` +
+            'This will delete:\n' +
+            '- User account\n' +
+            '- User histories\n' +
+            '- User book histories\n\n' +
+            'Files will NOT be deleted.\n' +
+            'This action CANNOT be undone!'
+        );
+
+        if (!confirmation) return;
+
+        try {
+            showLoading();
+            const result = await api.deleteUserData(userId);
+            showResult('deleteResult',
+                `✅ User data deleted successfully!\n` +
+                `User ID: ${result.user_id}\n` +
+                `Username: ${result.username}\n` +
+                `Email: ${result.email}`,
+                'success'
+            );
+            (document.getElementById('deleteUserId') as HTMLInputElement).value = '';
+        } catch (error) {
+            showResult('deleteResult', `❌ Error: ${(error as Error).message}`, 'error');
+        } finally {
+            hideLoading();
+        }
+    });
+
+    // Delete User Complete
+    document.getElementById('deleteUserCompleteBtn')?.addEventListener('click', async () => {
+        const userId = parseInt((document.getElementById('deleteUserId') as HTMLInputElement).value);
+        if (!userId || userId < 1) {
+            showResult('deleteResult', '❌ Please enter a valid user ID', 'error');
+            return;
+        }
+
+        const confirmation = confirm(
+            `⚠️ COMPLETE DELETION for user ID ${userId}?\n\n` +
+            'This will delete:\n' +
+            '- ALL FILES (uploads, audio, covers, chunks)\n' +
+            '- ALL DATABASE RECORDS (account, histories, books)\n\n' +
+            'This is a COMPLETE removal from the system!\n' +
+            'This action CANNOT be undone!\n\n' +
+            'Are you absolutely sure?'
+        );
+
+        if (!confirmation) return;
+
+        try {
+            showLoading();
+            const result = await api.deleteUserComplete(userId);
+            showResult('deleteResult',
+                `✅ User completely deleted!\n` +
+                `User ID: ${result.user_id}\n` +
+                `Username: ${result.username}\n` +
+                `Email: ${result.email}`,
+                'success'
+            );
+            (document.getElementById('deleteUserId') as HTMLInputElement).value = '';
+        } catch (error) {
+            showResult('deleteResult', `❌ Error: ${(error as Error).message}`, 'error');
+        } finally {
+            hideLoading();
+        }
+    });
+}
+
+function showResult(elementId: string, message: string, type: 'success' | 'error'): void {
+    const element = document.getElementById(elementId);
+    if (!element) return;
+    
+    element.textContent = message;
+    element.className = `result-message ${type}`;
+    element.style.display = 'block';
+    
+    // Auto-hide after 10 seconds for success, keep error visible
+    if (type === 'success') {
+        setTimeout(() => {
+            element.style.display = 'none';
+        }, 10000);
+    }
+}
+
+function getCurrentTab(): string {
+    const activeTab = document.querySelector('.nav-tab.active');
+    return activeTab?.getAttribute('data-tab') || 'overview';
 }
 
 // Make toggleUserAdmin available globally

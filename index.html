@@ -44,6 +44,7 @@
             <button class="nav-tab active" data-tab="overview">Overview</button>
             <button class="nav-tab" data-tab="users">Users</button>
             <button class="nav-tab" data-tab="active">Active Users</button>
+            <button class="nav-tab" data-tab="maintenance">⚠️ Maintenance</button>
         </nav>
 
         <!-- Tab Content Container -->
@@ -216,6 +217,112 @@
                         </table>
                     </div>
                 </section>
+
+                <!-- Maintenance Tab -->
+                <section id="maintenanceTab" class="tab-content" style="display: none;">
+                    <div class="tab-header">
+                        <h2>⚠️ System Maintenance</h2>
+                        <p class="warning-text">⚠️ WARNING: These operations are DESTRUCTIVE and cannot be undone!</p>
+                    </div>
+
+                    <!-- System Wipe Section -->
+                    <div class="maintenance-section danger-section">
+                        <div class="section-header">
+                            <h3>🚨 Complete System Wipe</h3>
+                            <p>Deletes ALL non-admin users and their database records. Admin accounts are preserved.</p>
+                        </div>
+                        <div class="maintenance-controls">
+                            <div class="form-group">
+                                <label for="wipeConfirmation">Type confirmation token to enable wipe:</label>
+                                <input 
+                                    type="text" 
+                                    id="wipeConfirmation" 
+                                    placeholder="WIPE_ALL_USER_DATA_CONFIRM"
+                                    class="confirmation-input"
+                                >
+                                <small>Required: <code>WIPE_ALL_USER_DATA_CONFIRM</code></small>
+                            </div>
+                            <button id="systemWipeBtn" class="btn btn-danger" disabled>
+                                🚨 Wipe All Non-Admin Users
+                            </button>
+                        </div>
+                        <div id="wipeResult" class="result-message"></div>
+                    </div>
+
+                    <!-- Individual User Management -->
+                    <div class="maintenance-section">
+                        <div class="section-header">
+                            <h3>🗑️ Individual User Management</h3>
+                            <p>Delete specific users, their files, or both</p>
+                        </div>
+                        <div class="maintenance-controls">
+                            <div class="form-group">
+                                <label for="deleteUserId">User ID:</label>
+                                <input 
+                                    type="number" 
+                                    id="deleteUserId" 
+                                    placeholder="Enter user ID"
+                                    min="1"
+                                >
+                            </div>
+                            <div class="button-group">
+                                <button id="deleteUserFilesBtn" class="btn btn-warning">
+                                    📁 Delete Files Only
+                                </button>
+                                <button id="deleteUserDataBtn" class="btn btn-warning">
+                                    💾 Delete Data Only
+                                </button>
+                                <button id="deleteUserCompleteBtn" class="btn btn-danger">
+                                    🗑️ Complete Deletion (Files + Data)
+                                </button>
+                            </div>
+                        </div>
+                        <div id="deleteResult" class="result-message"></div>
+                    </div>
+
+                    <!-- Operation Legend -->
+                    <div class="maintenance-section info-section">
+                        <div class="section-header">
+                            <h3>📖 Operation Guide</h3>
+                        </div>
+                        <table class="legend-table">
+                            <thead>
+                                <tr>
+                                    <th>Operation</th>
+                                    <th>Files</th>
+                                    <th>Database</th>
+                                    <th>Use Case</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>System Wipe</strong></td>
+                                    <td>❌ No</td>
+                                    <td>✅ All non-admin</td>
+                                    <td>Fresh start, development reset</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Delete Files</strong></td>
+                                    <td>✅ Yes</td>
+                                    <td>✅ Content DB</td>
+                                    <td>Remove user's content only</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Delete Data</strong></td>
+                                    <td>❌ No</td>
+                                    <td>✅ Auth DB</td>
+                                    <td>Remove account, keep files</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Complete Deletion</strong></td>
+                                    <td>✅ Yes</td>
+                                    <td>✅ Both DBs</td>
+                                    <td>Complete user removal</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
             </div>
         </main>
     </div>
@@ -228,6 +335,18 @@
             <div class="modal-actions">
                 <button id="confirmAdminBtn" class="btn btn-primary">Confirm</button>
                 <button id="cancelAdminBtn" class="btn btn-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal for Destructive Operations -->
+    <div id="confirmModal" class="modal">
+        <div class="modal-content">
+            <h2 id="confirmModalTitle">⚠️ Confirm Action</h2>
+            <p id="confirmModalMessage"></p>
+            <div class="modal-actions">
+                <button id="confirmActionBtn" class="btn btn-danger">Confirm</button>
+                <button id="cancelActionBtn" class="btn btn-secondary">Cancel</button>
             </div>
         </div>
     </div>
