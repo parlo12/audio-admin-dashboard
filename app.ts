@@ -861,10 +861,25 @@ function renderNode(parent: HTMLElement, node: FileTreeNode, depth: number): voi
         size.textContent = formatFileSize(node.size);
     }
     
+    // Delete button (for files only)
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'file-tree-delete-btn';
+    if (!node.isDir) {
+        deleteBtn.textContent = '🗑️';
+        deleteBtn.title = 'Delete file';
+        deleteBtn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            await deleteFile(node.path, node.name);
+        });
+    }
+    
     header.appendChild(toggle);
     header.appendChild(icon);
     header.appendChild(name);
     header.appendChild(size);
+    if (!node.isDir) {
+        header.appendChild(deleteBtn);
+    }
     nodeDiv.appendChild(header);
     
     // Children container
@@ -886,6 +901,34 @@ function renderNode(parent: HTMLElement, node: FileTreeNode, depth: number): voi
     }
     
     parent.appendChild(nodeDiv);
+}
+
+async function deleteFile(filePath: string, fileName: string): Promise<void> {
+    if (!confirm(`Are you sure you want to delete "${fileName}"?\n\nThis action cannot be undone.`)) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/admin/files`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${appState.getToken()}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ path: filePath })
+        });
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to delete file');
+        }
+        
+        alert(`✅ File "${fileName}" deleted successfully`);
+        // Reload the file tree
+        await loadFileTree();
+    } catch (error) {
+        alert(`❌ Error deleting file: ${(error as Error).message}`);
+    }
 }
 
 function formatFileSize(bytes: number): string {

@@ -763,6 +763,31 @@ small {
     padding: 12px;
 }
 
+.file-tree-delete-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 8px;
+    margin-left: 8px;
+    font-size: 16px;
+    opacity: 0;
+    transition: opacity 0.2s, background-color 0.2s;
+    border-radius: 4px;
+}
+
+.file-tree-node-header:hover .file-tree-delete-btn {
+    opacity: 1;
+}
+
+.file-tree-delete-btn:hover {
+    background-color: var(--danger-color);
+    opacity: 1 !important;
+}
+
+.file-tree-delete-btn:active {
+    transform: scale(0.95);
+}
+
 @media (max-width: 768px) {
     .button-group {
         flex-direction: column;
@@ -770,5 +795,9 @@ small {
 
     .button-group button {
         width: 100%;
+    }
+    
+    .file-tree-delete-btn {
+        opacity: 1;
     }
 }
