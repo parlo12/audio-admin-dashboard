@@ -788,6 +788,90 @@ small {
     transform: scale(0.95);
 }
 
+/* Bulk delete controls */
+.bulk-delete-controls {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px;
+    background-color: var(--bg-secondary);
+    border-radius: 8px;
+    margin-bottom: 16px;
+}
+
+#selectedCount {
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+#deleteSelectedBtn {
+    background-color: #ef4444;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background-color 0.2s;
+}
+
+#deleteSelectedBtn:hover:not(:disabled) {
+    background-color: #dc2626;
+}
+
+#deleteSelectedBtn:disabled {
+    background-color: #9ca3af;
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+/* Directory containers */
+.directory-container {
+    margin-bottom: 24px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.directory-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px;
+    background-color: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.directory-label {
+    font-size: 16px;
+}
+
+.select-all-checkbox {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: var(--primary-color);
+}
+
+.directory-contents {
+    padding: 8px;
+}
+
+/* File checkboxes */
+.file-checkbox {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    margin-right: 8px;
+    accent-color: var(--primary-color);
+}
+
+.file-tree-node-header {
+    display: flex;
+    align-items: center;
+}
+
 @media (max-width: 768px) {
     .button-group {
         flex-direction: column;

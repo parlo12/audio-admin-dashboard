@@ -804,10 +804,18 @@ async function loadFileTree(): Promise<void> {
 function renderFileTreeNew(container: HTMLElement, data: any): void {
     container.innerHTML = '';
     
-    // Show header with stats
+    // Show header with stats and bulk delete controls
     const header = document.createElement('div');
     header.className = 'file-tree-header';
-    header.innerHTML = `<span class="file-tree-icon">💾</span><strong>Server Storage</strong> - ${data.stats.totalFiles} files (${formatFileSize(data.stats.totalSize)})`;
+    header.innerHTML = `
+        <div>
+            <span class="file-tree-icon">💾</span><strong>Server Storage</strong> - ${data.stats.totalFiles} files (${formatFileSize(data.stats.totalSize)})
+        </div>
+        <div class="bulk-delete-controls" style="display: none;">
+            <span id="selectedCount">0 selected</span>
+            <button id="deleteSelectedBtn" class="btn btn-danger">🗑️ Delete Selected</button>
+        </div>
+    `;
     container.appendChild(header);
     
     // Render each directory tree
@@ -815,9 +823,151 @@ function renderFileTreeNew(container: HTMLElement, data: any): void {
     directories.forEach((dirName: string) => {
         const tree = data.trees[dirName];
         if (tree) {
-            renderNode(container, tree, 0);
+            renderDirectoryWithControls(container, tree, dirName);
         }
     });
+    
+    // Setup bulk delete button
+    const deleteBtn = document.getElementById('deleteSelectedBtn');
+    if (deleteBtn) {
+        deleteBtn.addEventListener('click', handleBulkDelete);
+    }
+}
+
+function renderDirectoryWithControls(parent: HTMLElement, tree: any, dirName: string): void {
+    const dirContainer = document.createElement('div');
+    dirContainer.className = 'directory-container';
+    dirContainer.dataset.dirName = dirName;
+    
+    // Directory header with select all
+    const dirHeader = document.createElement('div');
+    dirHeader.className = 'directory-header';
+    
+    const selectAll = document.createElement('input');
+    selectAll.type = 'checkbox';
+    selectAll.className = 'select-all-checkbox';
+    selectAll.dataset.dir = dirName;
+    selectAll.addEventListener('change', (e) => {
+        const target = e.target as HTMLInputElement;
+        selectAllInDirectory(dirName, target.checked);
+    });
+    
+    const dirLabel = document.createElement('span');
+    dirLabel.className = 'directory-label';
+    dirLabel.innerHTML = `📁 <strong>${tree.name}</strong> (${tree.children?.length || 0} items)`;
+    
+    dirHeader.appendChild(selectAll);
+    dirHeader.appendChild(dirLabel);
+    dirContainer.appendChild(dirHeader);
+    
+    // Render directory contents
+    const contentsDiv = document.createElement('div');
+    contentsDiv.className = 'directory-contents';
+    renderNode(contentsDiv, tree, 0);
+    dirContainer.appendChild(contentsDiv);
+    
+    parent.appendChild(dirContainer);
+}
+
+function selectAllInDirectory(dirName: string, checked: boolean): void {
+    const dirContainer = document.querySelector(`.directory-container[data-dir-name="${dirName}"]`);
+    if (!dirContainer) return;
+    
+    const checkboxes = dirContainer.querySelectorAll<HTMLInputElement>('.file-checkbox');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = checked;
+    });
+    
+    updateSelectedCount();
+}
+
+function updateSelectedCount(): void {
+    const allCheckboxes = document.querySelectorAll<HTMLInputElement>('.file-checkbox');
+    const checkedCount = Array.from(allCheckboxes).filter(cb => cb.checked).length;
+    
+    const countElement = document.getElementById('selectedCount');
+    if (countElement) {
+        countElement.textContent = `${checkedCount} selected`;
+    }
+    
+    const deleteBtn = document.getElementById('deleteSelectedBtn') as HTMLButtonElement;
+    if (deleteBtn) {
+        deleteBtn.disabled = checkedCount === 0;
+        deleteBtn.style.display = checkedCount > 0 ? 'inline-block' : 'none';
+    }
+}
+
+async function handleBulkDelete(): Promise<void> {
+    const checkedBoxes = document.querySelectorAll<HTMLInputElement>('.file-checkbox:checked');
+    const filesToDelete: Array<{path: string, name: string}> = [];
+    
+    checkedBoxes.forEach(checkbox => {
+        const path = checkbox.dataset.path || '';
+        const name = checkbox.dataset.name || '';
+        if (path && name) {
+            filesToDelete.push({ path, name });
+        }
+    });
+    
+    if (filesToDelete.length === 0) {
+        alert('No files selected');
+        return;
+    }
+    
+    const confirmMsg = `Are you sure you want to delete ${filesToDelete.length} file(s)?\n\n` +
+                      filesToDelete.map(f => f.name).join('\n');
+    
+    if (!confirm(confirmMsg)) {
+        return;
+    }
+    
+    let successCount = 0;
+    let failCount = 0;
+    const errors: string[] = [];
+    
+    // Delete files one by one
+    for (const file of filesToDelete) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/admin/files`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ path: file.path })
+            });
+            
+            if (response.ok) {
+                successCount++;
+            } else {
+                failCount++;
+                const error = await response.json();
+                errors.push(`${file.name}: ${error.error || 'Unknown error'}`);
+            }
+        } catch (err) {
+            failCount++;
+            errors.push(`${file.name}: ${err instanceof Error ? err.message : 'Network error'}`);
+        }
+    }
+    
+    // Show results
+    let message = `Deleted ${successCount} file(s)`;
+    if (failCount > 0) {
+        message += `\nFailed to delete ${failCount} file(s)`;
+        if (errors.length > 0) {
+            message += '\n\nErrors:\n' + errors.slice(0, 5).join('\n');
+            if (errors.length > 5) {
+                message += `\n... and ${errors.length - 5} more errors`;
+            }
+        }
+    }
+    
+    alert(message);
+    
+    if (successCount > 0) {
+        // Reload file tree to reflect deletions
+        await loadFileTree();
+    }
 }
 
 function renderFileTree(container: HTMLElement, node: FileTreeNode, rootPath: string): void {
@@ -865,6 +1015,17 @@ function renderNode(parent: HTMLElement, node: any, depth: number): void {
     const nodeSize = node.size;
     const nodeName = node.name;
     const nodePath = node.path;
+    
+    // Checkbox for files (not directories)
+    if (!isDir) {
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.className = 'file-checkbox';
+        checkbox.dataset.path = nodePath;
+        checkbox.dataset.name = nodeName;
+        checkbox.addEventListener('change', updateSelectedCount);
+        header.appendChild(checkbox);
+    }
     
     // Toggle arrow for directories
     const toggle = document.createElement('span');
