@@ -948,8 +948,20 @@ async function handleBulkDelete(): Promise<void> {
                 successCount++;
             } else {
                 failCount++;
-                const error = await response.json();
-                errors.push(`${file.name}: ${error.error || 'Unknown error'}`);
+                let errorMsg = 'Unknown error';
+                try {
+                    const contentType = response.headers.get('content-type');
+                    if (contentType && contentType.includes('application/json')) {
+                        const error = await response.json();
+                        errorMsg = error.error || error.message || 'Unknown error';
+                    } else {
+                        const text = await response.text();
+                        errorMsg = text || `HTTP ${response.status}`;
+                    }
+                } catch (parseErr) {
+                    errorMsg = `HTTP ${response.status}`;
+                }
+                errors.push(`${file.name}: ${errorMsg}`);
             }
         } catch (err) {
             failCount++;
