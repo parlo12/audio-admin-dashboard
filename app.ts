@@ -938,7 +938,7 @@ async function handleBulkDelete(): Promise<void> {
             const response = await fetch(`${API_BASE_URL}/admin/files`, {
                 method: 'DELETE',
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+                    'Authorization': `Bearer ${appState.getToken()}`,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({ path: file.path })
