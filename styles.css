@@ -792,16 +792,14 @@ small {
 .bulk-delete-controls {
     display: flex;
     align-items: center;
-    gap: 16px;
-    padding: 12px;
-    background-color: var(--bg-secondary);
-    border-radius: 8px;
-    margin-bottom: 16px;
+    gap: 12px;
+    transition: opacity 0.2s;
 }
 
 #selectedCount {
     color: var(--text-secondary);
     font-weight: 500;
+    font-size: 14px;
 }
 
 #deleteSelectedBtn {

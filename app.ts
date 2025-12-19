@@ -808,12 +808,14 @@ function renderFileTreeNew(container: HTMLElement, data: any): void {
     const header = document.createElement('div');
     header.className = 'file-tree-header';
     header.innerHTML = `
-        <div>
-            <span class="file-tree-icon">💾</span><strong>Server Storage</strong> - ${data.stats.totalFiles} files (${formatFileSize(data.stats.totalSize)})
-        </div>
-        <div class="bulk-delete-controls" style="display: none;">
-            <span id="selectedCount">0 selected</span>
-            <button id="deleteSelectedBtn" class="btn btn-danger">🗑️ Delete Selected</button>
+        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; gap: 16px;">
+            <div>
+                <span class="file-tree-icon">💾</span><strong>Server Storage</strong> - ${data.stats.totalFiles} files (${formatFileSize(data.stats.totalSize)})
+            </div>
+            <div class="bulk-delete-controls">
+                <span id="selectedCount">0 selected</span>
+                <button id="deleteSelectedBtn">🗑️ Delete Selected</button>
+            </div>
         </div>
     `;
     container.appendChild(header);
@@ -891,9 +893,14 @@ function updateSelectedCount(): void {
     }
     
     const deleteBtn = document.getElementById('deleteSelectedBtn') as HTMLButtonElement;
+    const controls = document.querySelector('.bulk-delete-controls') as HTMLElement;
+    
     if (deleteBtn) {
         deleteBtn.disabled = checkedCount === 0;
-        deleteBtn.style.display = checkedCount > 0 ? 'inline-block' : 'none';
+    }
+    
+    if (controls) {
+        controls.style.opacity = checkedCount > 0 ? '1' : '0.5';
     }
 }
 
