@@ -788,10 +788,36 @@ async function loadFileTree(): Promise<void> {
         }
         
         const data = await response.json();
-        renderFileTree(container, data.tree, data.root);
+        
+        // Handle new API format with trees object
+        if (data.trees) {
+            renderFileTreeNew(container, data);
+        } else {
+            // Fallback to old format
+            renderFileTree(container, data.tree, data.root);
+        }
     } catch (error) {
         container.innerHTML = `<div class="file-tree-empty">❌ Error loading files: ${(error as Error).message}</div>`;
     }
+}
+
+function renderFileTreeNew(container: HTMLElement, data: any): void {
+    container.innerHTML = '';
+    
+    // Show header with stats
+    const header = document.createElement('div');
+    header.className = 'file-tree-header';
+    header.innerHTML = `<span class="file-tree-icon">💾</span><strong>Server Storage</strong> - ${data.stats.totalFiles} files (${formatFileSize(data.stats.totalSize)})`;
+    container.appendChild(header);
+    
+    // Render each directory tree
+    const directories = data.directories || [];
+    directories.forEach((dirName: string) => {
+        const tree = data.trees[dirName];
+        if (tree) {
+            renderNode(container, tree, 0);
+        }
+    });
 }
 
 function renderFileTree(container: HTMLElement, node: FileTreeNode, rootPath: string): void {
@@ -826,19 +852,26 @@ function renderFileTree(container: HTMLElement, node: FileTreeNode, rootPath: st
     }
 }
 
-function renderNode(parent: HTMLElement, node: FileTreeNode, depth: number): void {
+function renderNode(parent: HTMLElement, node: any, depth: number): void {
     const nodeDiv = document.createElement('div');
     nodeDiv.className = 'file-tree-node';
     
     const header = document.createElement('div');
     header.className = 'file-tree-node-header';
     
+    // Handle both camelCase and snake_case
+    const isDir = node.isDir || node.is_dir;
+    const children = node.children || [];
+    const nodeSize = node.size;
+    const nodeName = node.name;
+    const nodePath = node.path;
+    
     // Toggle arrow for directories
     const toggle = document.createElement('span');
     toggle.className = 'file-tree-toggle';
-    if (node.isDir && node.children && node.children.length > 0) {
+    if (isDir && children && children.length > 0) {
         toggle.textContent = '▼';
-    } else if (node.isDir) {
+    } else if (isDir) {
         toggle.textContent = '▶';
     } else {
         toggle.textContent = '';
@@ -847,29 +880,29 @@ function renderNode(parent: HTMLElement, node: FileTreeNode, depth: number): voi
     // Icon
     const icon = document.createElement('span');
     icon.className = 'file-tree-icon';
-    icon.textContent = node.isDir ? '📁' : '📄';
+    icon.textContent = isDir ? '📁' : '📄';
     
     // Name
     const name = document.createElement('span');
     name.className = 'file-tree-name';
-    name.textContent = node.name;
+    name.textContent = nodeName;
     
     // Size (for files only)
     const size = document.createElement('span');
     size.className = 'file-tree-size';
-    if (!node.isDir && node.size !== undefined) {
-        size.textContent = formatFileSize(node.size);
+    if (!isDir && nodeSize !== undefined) {
+        size.textContent = formatFileSize(nodeSize);
     }
     
     // Delete button (for files only)
     const deleteBtn = document.createElement('button');
     deleteBtn.className = 'file-tree-delete-btn';
-    if (!node.isDir) {
+    if (!isDir) {
         deleteBtn.textContent = '🗑️';
         deleteBtn.title = 'Delete file';
         deleteBtn.addEventListener('click', async (e) => {
             e.stopPropagation();
-            await deleteFile(node.path, node.name);
+            await deleteFile(nodePath, nodeName);
         });
     }
     
@@ -877,17 +910,17 @@ function renderNode(parent: HTMLElement, node: FileTreeNode, depth: number): voi
     header.appendChild(icon);
     header.appendChild(name);
     header.appendChild(size);
-    if (!node.isDir) {
+    if (!isDir) {
         header.appendChild(deleteBtn);
     }
     nodeDiv.appendChild(header);
     
     // Children container
-    if (node.isDir && node.children && node.children.length > 0) {
+    if (isDir && children && children.length > 0) {
         const childrenDiv = document.createElement('div');
         childrenDiv.className = 'file-tree-children';
         
-        node.children.forEach(child => {
+        children.forEach((child: any) => {
             renderNode(childrenDiv, child, depth + 1);
         });
         
