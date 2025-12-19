@@ -1132,8 +1132,20 @@ async function deleteFile(filePath: string, fileName: string): Promise<void> {
         });
         
         if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error || 'Failed to delete file');
+            let errorMsg = 'Failed to delete file';
+            try {
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    const error = await response.json();
+                    errorMsg = error.error || error.message || 'Failed to delete file';
+                } else {
+                    const text = await response.text();
+                    errorMsg = text || `HTTP ${response.status}`;
+                }
+            } catch (parseErr) {
+                errorMsg = `HTTP ${response.status}`;
+            }
+            throw new Error(errorMsg);
         }
         
         alert(`✅ File "${fileName}" deleted successfully`);
