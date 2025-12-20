@@ -8,11 +8,19 @@
     "watch": "tsc --watch",
     "serve": "npx http-server -p 8000"
   },
-  "keywords": ["admin", "dashboard", "typescript"],
+  "keywords": [
+    "admin",
+    "dashboard",
+    "typescript"
+  ],
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "typescript": "^5.3.3",
-    "http-server": "^14.1.1"
+    "http-server": "^14.1.1",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^5.2.1"
   }
 }
