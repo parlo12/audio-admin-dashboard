@@ -1036,7 +1036,11 @@ function renderNode(parent: HTMLElement, node: any, depth: number, dirPrefix: st
     const nodePath = node.path;
     
     // Construct full path with directory prefix
-    const fullPath = dirPrefix && !nodePath.startsWith(dirPrefix + '/') ? `${dirPrefix}/${nodePath}` : nodePath;
+    // If dirPrefix exists and nodePath doesn't already include it, prepend it
+    let fullPath = nodePath;
+    if (dirPrefix && nodePath && !nodePath.startsWith(dirPrefix + '/') && !nodePath.includes('/')) {
+        fullPath = `${dirPrefix}/${nodePath}`;
+    }
     
     // Checkbox for files (not directories)
     if (!isDir) {
