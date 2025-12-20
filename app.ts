@@ -1108,7 +1108,9 @@ function renderNode(parent: HTMLElement, node: any, depth: number, dirPrefix: st
         childrenDiv.className = 'file-tree-children';
         
         children.forEach((child: any) => {
-            renderNode(childrenDiv, child, depth + 1);
+            // Pass dirPrefix to children, or use fullPath if this is a directory
+            const childDirPrefix = dirPrefix || fullPath;
+            renderNode(childrenDiv, child, depth + 1, childDirPrefix);
         });
         
         nodeDiv.appendChild(childrenDiv);
