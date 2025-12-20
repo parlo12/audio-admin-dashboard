@@ -865,7 +865,7 @@ function renderDirectoryWithControls(parent: HTMLElement, tree: any, dirName: st
     // Render directory contents
     const contentsDiv = document.createElement('div');
     contentsDiv.className = 'directory-contents';
-    renderNode(contentsDiv, tree, 0);
+    renderNode(contentsDiv, tree, 0, dirName);
     dirContainer.appendChild(contentsDiv);
     
     parent.appendChild(dirContainer);
@@ -1021,7 +1021,7 @@ function renderFileTree(container: HTMLElement, node: FileTreeNode, rootPath: st
     }
 }
 
-function renderNode(parent: HTMLElement, node: any, depth: number): void {
+function renderNode(parent: HTMLElement, node: any, depth: number, dirPrefix: string = ''): void {
     const nodeDiv = document.createElement('div');
     nodeDiv.className = 'file-tree-node';
     
@@ -1035,12 +1035,15 @@ function renderNode(parent: HTMLElement, node: any, depth: number): void {
     const nodeName = node.name;
     const nodePath = node.path;
     
+    // Construct full path with directory prefix
+    const fullPath = dirPrefix && !nodePath.startsWith(dirPrefix + '/') ? `${dirPrefix}/${nodePath}` : nodePath;
+    
     // Checkbox for files (not directories)
     if (!isDir) {
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
         checkbox.className = 'file-checkbox';
-        checkbox.dataset.path = nodePath;
+        checkbox.dataset.path = fullPath;
         checkbox.dataset.name = nodeName;
         checkbox.addEventListener('change', updateSelectedCount);
         header.appendChild(checkbox);
@@ -1082,7 +1085,7 @@ function renderNode(parent: HTMLElement, node: any, depth: number): void {
         deleteBtn.title = 'Delete file';
         deleteBtn.addEventListener('click', async (e) => {
             e.stopPropagation();
-            await deleteFile(nodePath, nodeName);
+            await deleteFile(fullPath, nodeName);
         });
     }
     
